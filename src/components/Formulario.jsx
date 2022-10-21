@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react"
+import { Error } from "./Error";
 
 
-export const Formulario = () => {
+export const Formulario = ({ pacientes, setPacientes, paciente, setPaciente }) => {
 
     // Definimos los useStates
     const [nombre, setNombre]    = useState('');
@@ -11,6 +12,22 @@ export const Formulario = () => {
     const [sintomas, setSintomas]    = useState('');
     
     const [error, setError] = useState(false);
+
+    useEffect(() => {
+        if (Object.keys(paciente).length !== 0) {
+            setNombre(paciente.nombre);
+            setPropietario(paciente.propietario);
+            setEmail(paciente.email);
+            setFecha(paciente.fecha);
+            setSintomas(paciente.sintomas);
+        }
+    }, [paciente]);
+
+    const generarID = () => {
+        const random = Math.random().toString(36).substr(2, 9);
+        const fecha = Date.now().toString(36);
+        return random + fecha;
+    }
     
     // El handle submit, que se encargará de enviar la información para generar las tarjetas
     const handleSubmit = (e) => {
@@ -22,27 +39,55 @@ export const Formulario = () => {
         return;
       }
       setError(false);
+      
+      //Construimos el objeto de paciente con los datos del formulario y lo añadimos al array de pacientes
+      const objetoPaciente = {
+          nombre,
+          propietario,
+          email,
+          fecha,
+          sintomas,
+      }
+
+      // Si el objeto paciente está vacío, es que estamos creando un nuevo paciente y le asignamos un ID nuevo, si no estamos editando y no le asignamos un ID nuevo
+      if(paciente.id){
+            objetoPaciente.id = paciente.id;
+            const pacientesActualizados = pacientes.map(pacienteState => pacienteState.id === paciente.id ? objetoPaciente : pacienteState);
+            setPacientes(pacientesActualizados);
+            setPaciente({});
+      }else{
+            objetoPaciente.id = generarID();
+            setPacientes([...pacientes, objetoPaciente]);
+      }
+
+      // Reiniciamos el formulario
+      setNombre('');
+      setPropietario('');
+      setEmail('');
+      setFecha('');
+      setSintomas('');
     }
+
+    
 
   return (
     <>
         <div className="md:w-1/2 lg:w-2/5">
             <h2 className="font-black text-3xl text-center">Seguimiento Pacientes</h2>
 
-            <p className="text-lg mt-5 text-center mb-10">
-                Añade pacientes y {` `}
-                <span className="text-indigo-600 font-bold">Administralos</span>
-            </p>
+                <p className="text-xl mt-5 text-center mb-10">
+                    Añade pacientes y {` `}
+                    <span className="text-indigo-600 font-bold">Administralos</span>
+                </p>
 
             <form
               className="bg-white shadow-md rounded-lg py-10 px-5 mb-10"
               onSubmit={handleSubmit}
             >
                 {error && (
-                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-5" role="alert">
-                        <p className="font-bold">Hubo un error</p>
-                        <p>Todos los campos son obligatorios</p>
-                    </div>
+                    <Error>
+                        Todos los campos son obligatorios.
+                    </Error>
                 )}
                 <div className="mb-5">
                     <label htmlFor="mascota" className="block text-grey-700 uppercase font-bold">Nombre Mascota*</label>
@@ -107,7 +152,7 @@ export const Formulario = () => {
                 <input
                     type="submit"
                     className="bg-indigo-600 w-full p-3 text-white uppercase font-bold hover:bg-indigo-700 rounded-md cursor-pointer transition-all"
-                    value="Agregar Paciente"
+                    value={paciente.id ? 'Editar Paciente' : 'Agregar Paciente'}
                 />
             </form>
         </div>
